@@ -234,6 +234,7 @@
                         <option value="breakfast">早餐</option>
                         <option value="lunch">午餐</option>
                         <option value="dinner">晚餐</option>
+                        <option value="snack">零食</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -287,8 +288,11 @@
         let recipes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
             { id: 'r1', name: '清蒸三文鱼', category: 'diet', type: 'lunch', desc: '高蛋白低脂，富含Omega-3', ingredients: ['三文鱼150g'], steps: ['清蒸8分钟'] },
             { id: 'r3', name: '香煎鸡胸配时蔬', category: 'diet', type: 'dinner', desc: '低卡高营养', ingredients: ['鸡胸肉100g'], steps: ['煎熟'] },
-            { id: 'r5', name: '芝士焗红薯', category: 'indulgence', type: 'snack', desc: '治愈系甜品', ingredients: ['红薯2个'], steps: ['烤15分钟'] },
-            { id: 'r6', name: '红烧肉', category: 'guest', type: 'dinner', desc: '色泽红亮', ingredients: ['五花肉500g'], steps: ['炖煮40分钟'] }
+            { id: 'r5', name: '芝士焗红薯', category: 'indulgence', type: 'dinner', desc: '治愈系甜品', ingredients: ['红薯2个'], steps: ['烤15分钟'] },
+            { id: 'r6', name: '红烧肉', category: 'guest', type: 'dinner', desc: '色泽红亮', ingredients: ['五花肉500g'], steps: ['炖煮40分钟'] },
+            { id: 'r7', name: '虾仁彩椒温沙拉', category: 'diet', type: 'lunch', desc: '低脂且饱腹感极强', ingredients: ['大虾仁 10只', '彩椒(红黄绿) 各半个', '西兰花 1小朵', '橄榄油 1勺', '黑胡椒/海盐 适量'], steps: ['西兰花焯水备用，彩椒切块', '锅中倒油，虾仁煎至两面变红', '倒入彩椒和西兰花大火翻炒30秒', '撒入盐和黑胡椒，挤点柠檬汁出锅'] },
+            { id: 'r8', name: '滑蛋虾仁全麦吐司', category: 'diet', type: 'breakfast', desc: '高颜值轻食', ingredients: ['全麦吐司 1片', '鸡蛋 2个', '虾仁 5只', '牛奶 20ml', '欧芹碎 少许'], steps: ['吐司放入平底锅双面加热至微焦', '蛋液加牛奶打散，虾仁先炒熟捞出', '小火热锅下蛋液，快凝固时放入虾仁立刻关火', '将滑蛋铺在吐司上，撒欧芹碎装饰'] },
+            
         ];
         
         let todayPlan = JSON.parse(localStorage.getItem(PLAN_KEY)) || [];
