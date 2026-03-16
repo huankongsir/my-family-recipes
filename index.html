@@ -101,8 +101,6 @@
         .btn-delete { background: var(--bg-white); color: var(--brand-accent); }
         .btn-delete:hover { background: var(--brand-accent); color: white; transform: scale(1.15); }
         
-        /* 新增：编辑按钮样式 */
-        /* 修改编辑按钮样式，支持SVG居中 */
           .btn-edit { 
               background: var(--bg-white); 
               color: var(--brand-primary); 
@@ -123,7 +121,6 @@
               transform: scale(1.15); 
           }
 
-          /* 悬停时让笔尖动一下，更有交互感 */
           .btn-edit:hover svg {
               transform: rotate(-15deg);
           }
@@ -170,12 +167,21 @@
             font-weight: 700;
         }
 
+        /* 弹窗样式调整 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
-        .modal-content { background: var(--bg-white); border-radius: var(--radius-xl); width: 90%; max-width: 650px; padding: 40px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; position: relative; animation: modalSlide 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        
+        /* 新增包裹层：接管动画和定位 */
+        .modal-wrapper { position: relative; width: 90%; max-width: 650px; animation: modalSlide 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
         @keyframes modalSlide { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .close-modal { position: absolute; top: 25px; right: 25px; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-light); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; color: var(--text-dark); transition: all 0.2s; }
+
+        /* 修改内容区：专注于内部滚动，不再负责动画 */
+        .modal-content { background: var(--bg-white); border-radius: var(--radius-xl); width: 100%; padding: 40px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        
+        /* 修改关闭按钮：移出到白框右上角外部 */
+        .close-modal { position: absolute; top: -15px; right: -15px; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-white); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; color: var(--text-dark); transition: all 0.2s; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .close-modal:hover { background: var(--brand-accent); color: white; transform: rotate(90deg); }
+        
         .modal h2 { font-weight: 900; font-size: 28px; color: var(--text-dark); margin-bottom: 30px; }
         .form-group { margin-bottom: 24px; }
         .form-group label { display: block; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; font-size: 15px; }
@@ -234,71 +240,77 @@
     </footer>
 
     <div class="modal" id="inputModal">
-        <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-wrapper" style="max-width: 450px;">
             <span class="close-modal" id="closeInputModal">&times;</span>
-            <h2 id="inputModalTitle">提示</h2>
-            <div class="form-group">
-                <input type="text" id="inputValue" placeholder="请输入...">
+            <div class="modal-content">
+                <h2 id="inputModalTitle">提示</h2>
+                <div class="form-group">
+                    <input type="text" id="inputValue" placeholder="请输入...">
+                </div>
+                <button class="btn-submit" id="submitInputBtn">确认保存</button>
             </div>
-            <button class="btn-submit" id="submitInputBtn">确认保存</button>
         </div>
     </div>
 
     <div class="modal" id="addModal">
-        <div class="modal-content">
+        <div class="modal-wrapper">
             <span class="close-modal" id="closeAddModal">&times;</span>
-            <h2>添加新菜谱</h2>
-            <form id="recipeForm">
-                <div class="form-group">
-                    <label>菜谱名称</label>
-                    <input type="text" id="recipeName" required placeholder="例如：香煎鸡胸配时蔬">
-                </div>
-                <div class="form-group">
-                    <label>所属分类</label>
-                    <select id="recipeCategory" required></select>
-                </div>
-                <div class="form-group">
-                    <label>餐别类型</label>
-                    <select id="recipeType" required>
-                        <option value="breakfast">早餐</option>
-                        <option value="lunch">午餐</option>
-                        <option value="dinner">晚餐</option>
-                        <option value="snack">零食</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>简短描述</label>
-                    <textarea id="recipeDesc" placeholder="高蛋白低脂，15分钟快手菜"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>食材清单（每行一项）</label>
-                    <textarea id="recipeIngredients" placeholder="鸡胸肉 150g&#10;西兰花 100g&#10;橄榄油 1小勺" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>制作步骤（每行一步）</label>
-                    <textarea id="recipeSteps" placeholder="1. 鸡胸肉切薄片&#10;2. 用盐和黑胡椒腌制10分钟&#10;3. 小火煎至两面金黄" required></textarea>
-                </div>
-                <button type="submit" class="btn-submit">保存菜谱</button>
-            </form>
+            <div class="modal-content">
+                <h2>添加新菜谱</h2>
+                <form id="recipeForm">
+                    <div class="form-group">
+                        <label>菜谱名称</label>
+                        <input type="text" id="recipeName" required placeholder="例如：香煎鸡胸配时蔬">
+                    </div>
+                    <div class="form-group">
+                        <label>所属分类</label>
+                        <select id="recipeCategory" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>餐别类型</label>
+                        <select id="recipeType" required>
+                            <option value="breakfast">早餐</option>
+                            <option value="lunch">午餐</option>
+                            <option value="dinner">晚餐</option>
+                            <option value="snack">零食</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>简短描述</label>
+                        <textarea id="recipeDesc" placeholder="高蛋白低脂，15分钟快手菜"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>食材清单（每行一项）</label>
+                        <textarea id="recipeIngredients" placeholder="鸡胸肉 150g&#10;西兰花 100g&#10;橄榄油 1小勺" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>制作步骤（每行一步）</label>
+                        <textarea id="recipeSteps" placeholder="1. 鸡胸肉切薄片&#10;2. 用盐和黑胡椒腌制10分钟&#10;3. 小火煎至两面金黄" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">保存菜谱</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <div class="modal" id="detailModal">
-        <div class="modal-content">
+        <div class="modal-wrapper">
             <span class="close-modal" id="closeDetailModal">&times;</span>
-            <div class="detail-header">
-                <div class="detail-img" id="detailImg"></div>
-                <h2 id="detailTitle"></h2>
-                <div class="meal-type" id="detailType"></div>
-                <p style="margin-top:15px; color:#64748B" id="detailDesc"></p>
-            </div>
-            <div class="detail-section">
-                <div class="section-title">食材准备</div>
-                <ul class="ingredients-list" id="detailIngredients"></ul>
-            </div>
-            <div class="detail-section">
-                <div class="section-title">制作步骤</div>
-                <ol class="steps-list" id="detailSteps"></ol>
+            <div class="modal-content">
+                <div class="detail-header">
+                    <div class="detail-img" id="detailImg"></div>
+                    <h2 id="detailTitle"></h2>
+                    <div class="meal-type" id="detailType"></div>
+                    <p style="margin-top:15px; color:#64748B" id="detailDesc"></p>
+                </div>
+                <div class="detail-section">
+                    <div class="section-title">食材准备</div>
+                    <ul class="ingredients-list" id="detailIngredients"></ul>
+                </div>
+                <div class="detail-section">
+                    <div class="section-title">制作步骤</div>
+                    <ol class="steps-list" id="detailSteps"></ol>
+                </div>
             </div>
         </div>
     </div>
@@ -331,7 +343,7 @@
         let currentFilter = 'all';
 
         let customInputCallback = null;
-        let editingRecipeId = null; // 新增：用于记录当前正在编辑的菜谱ID，null表示新增
+        let editingRecipeId = null;
 
         function init() {
             renderCategories();
@@ -471,7 +483,6 @@
                     });
                 });
             } else {
-                // 原有的删除逻辑
                 document.querySelectorAll('.btn-delete').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -487,7 +498,6 @@
                     });
                 });
 
-                // 新增：编辑逻辑
                 document.querySelectorAll('.btn-edit').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -498,7 +508,6 @@
                             editingRecipeId = recipeId;
                             updateFormCategorySelect();
                             
-                            // 数据回填
                             document.getElementById('recipeName').value = recipe.name;
                             document.getElementById('recipeCategory').value = recipe.category;
                             document.getElementById('recipeType').value = recipe.type;
@@ -598,6 +607,15 @@
         }
 
         function setupEventListeners() {
+            // 新增：点击弹窗遮罩空白处关闭
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+
             document.getElementById('closeInputModal').addEventListener('click', () => {
                 document.getElementById('inputModal').classList.remove('active');
             });
@@ -719,7 +737,7 @@
             });
             
             document.getElementById('openAddModal').addEventListener('click', () => {
-                editingRecipeId = null; // 重置为新增状态
+                editingRecipeId = null;
                 updateFormCategorySelect();
                 document.getElementById('recipeForm').reset();
                 document.querySelector('#addModal h2').textContent = '添加新菜谱'; 
@@ -740,14 +758,12 @@
                 const steps = document.getElementById('recipeSteps').value.split('\n').filter(i => i.trim());
 
                 if (editingRecipeId) {
-                    // 编辑模式
                     const index = recipes.findIndex(r => r.id === editingRecipeId);
                     if (index > -1) {
                         recipes[index] = { ...recipes[index], name, category, type, desc, ingredients, steps };
                     }
                     showNotification('修改成功！');
                 } else {
-                    // 新增模式
                     const newRecipe = {
                         id: 'r' + Date.now(),
                         name, category, type, desc, ingredients, steps
