@@ -65,6 +65,10 @@
         .btn-manage.active-mode { background: var(--text-dark); color: var(--bg-white); border-color: var(--text-dark); }
         .btn-add { background: var(--brand-primary); color: var(--bg-white); box-shadow: 0 8px 20px rgba(29, 78, 216, 0.25); }
         .btn-add:hover { background: #1E40AF; transform: translateY(-3px); box-shadow: 0 12px 24px rgba(29, 78, 216, 0.35); }
+        
+        /* AI 按钮样式 */
+        .btn-ai { background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%); color: white; box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25); }
+        .btn-ai:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(139, 92, 246, 0.35); }
 
         .nav-container { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; }
         .nav-item { font-size: 22px; font-weight: 900; color: var(--text-light); cursor: pointer; position: relative; transition: color 0.3s; padding-bottom: 8px; user-select: none; }
@@ -202,6 +206,10 @@
         #notify { position: fixed; top: 30px; right: 30px; background: var(--text-dark); color: white; padding: 16px 28px; border-radius: 100px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; font-weight: 700; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s 2.5s forwards; }
         @keyframes slideIn { from { transform: translateX(150%); } to { transform: translateX(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateX(150%); } }
+
+        /* 加载动画 */
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -209,6 +217,7 @@
         <h1 class="logo" style="margin:0;">食光小屋</h1>
         <div class="manage-btns">
             <button class="btn btn-manage" id="toggleManage">编辑模式</button>
+            <button class="btn btn-ai" id="openAiModal">✨ AI 链接导入</button>
             <button class="btn btn-add" id="openAddModal">＋ 添加菜谱</button>
         </div>
     </div>
@@ -239,6 +248,21 @@
         © 2024 食光小屋 - 你的专属在线食谱笔记本
     </footer>
 
+    <div class="modal" id="aiModal">
+        <div class="modal-wrapper" style="max-width: 500px;">
+            <span class="close-modal" id="closeAiModal">&times;</span>
+            <div class="modal-content">
+                <h2>AI 自动录入菜谱</h2>
+                <p style="margin-bottom: 20px; color: var(--text-gray); font-size: 14px;">粘贴抖音/小红书/B站的视频链接，AI 将自动分析视频并生成菜谱明细。</p>
+                <div class="form-group">
+                    <label>视频链接</label>
+                    <input type="text" id="videoUrl" placeholder="请粘贴视频分享链接...">
+                </div>
+                <button class="btn-submit" id="aiAnalyzeBtn" style="background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%);">开始分析</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="inputModal">
         <div class="modal-wrapper" style="max-width: 450px;">
             <span class="close-modal" id="closeInputModal">&times;</span>
@@ -256,7 +280,7 @@
         <div class="modal-wrapper">
             <span class="close-modal" id="closeAddModal">&times;</span>
             <div class="modal-content">
-                <h2>添加新菜谱</h2>
+                <h2 id="addModalTitle">添加新菜谱</h2>
                 <form id="recipeForm">
                     <div class="form-group">
                         <label>菜谱名称</label>
@@ -270,7 +294,7 @@
                         <label>餐别类型</label>
                         <select id="recipeType" required>
                             <option value="breakfast">早餐</option>
-                            <option value="lunch">午餐</option>
+                            <option value="lunch" selected>午餐</option>
                             <option value="dinner">晚餐</option>
                             <option value="snack">零食</option>
                         </select>
@@ -316,6 +340,15 @@
     </div>
 
     <script>
+        // ==========================================
+        // 关键：扣子(Coze) API 配置
+        // 请在此填写你在扣子平台获取的参数
+        // ==========================================
+        const COZE_CONFIG = {
+            apiToken: 'YOUR_API_TOKEN_HERE', // 替换为你的 Coze 个人访问令牌
+            workflowId: 'YOUR_WORKFLOW_ID_HERE' // 替换为你的工作流 ID
+        };
+
         const STORAGE_KEY = 'family_recipes';
         const PLAN_KEY = 'today_meal_plan';
         const CAT_KEY = 'recipe_categories';
@@ -515,7 +548,7 @@
                             document.getElementById('recipeIngredients').value = recipe.ingredients.join('\n');
                             document.getElementById('recipeSteps').value = recipe.steps.join('\n');
                             
-                            document.querySelector('#addModal h2').textContent = '编辑菜谱';
+                            document.getElementById('addModalTitle').textContent = '编辑菜谱';
                             document.getElementById('addModal').classList.add('active');
                         }
                     });
@@ -606,15 +639,97 @@
             document.getElementById('detailModal').classList.add('active');
         }
 
+        // ==========================================
+        // AI 核心逻辑：调用扣子 Workflow
+        // ==========================================
+        async function analyzeVideoWithAi() {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) {
+                showNotification('❌ 请粘贴有效的视频链接');
+                return;
+            }
+
+            const btn = document.getElementById('aiAnalyzeBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="loading-spinner"></span> 正在深度分析中...`;
+
+            try {
+                // 这里调用扣子的 Workflow 接口
+                // 注意：在浏览器端直接调用 API 可能会遇到 CORS 跨域问题
+                // 如果是个人使用，可以尝试在本地关闭 Chrome 安全检查，或使用代理服务器
+                const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${COZE_CONFIG.apiToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        workflow_id: COZE_CONFIG.workflowId,
+                        parameters: {
+                            url: url // 对应扣子工作流中的开始节点变量
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                // 假设扣子工作流返回的 data.data 是 JSON 字符串，包含 name, ingredients, steps 等
+                if (data.code === 0) {
+                    // 解析工作流输出结果
+                    // 扣子的返回值通常在 data.data 字段中，具体取决于你的输出节点配置
+                    let aiResult;
+                    try {
+                        aiResult = JSON.parse(data.data); 
+                    } catch(e) {
+                        // 如果扣子直接输出的是文本，需要你的工作流确保输出的是 JSON 格式
+                        showNotification('❌ 解析失败：AI 返回格式不正确');
+                        console.error('AI Output:', data.data);
+                        return;
+                    }
+
+                    // 填充表单
+                    document.getElementById('recipeName').value = aiResult.name || '';
+                    document.getElementById('recipeDesc').value = aiResult.desc || '由 AI 自动生成';
+                    document.getElementById('recipeIngredients').value = Array.isArray(aiResult.ingredients) ? aiResult.ingredients.join('\n') : (aiResult.ingredients || '');
+                    document.getElementById('recipeSteps').value = Array.isArray(aiResult.steps) ? aiResult.steps.join('\n') : (aiResult.steps || '');
+                    
+                    // 关闭 AI 弹窗，打开添加弹窗
+                    document.getElementById('aiModal').classList.remove('active');
+                    document.getElementById('addModalTitle').textContent = 'AI 录入核对';
+                    updateFormCategorySelect();
+                    document.getElementById('addModal').classList.add('active');
+                    
+                    showNotification('✨ AI 解析成功！请核对后保存');
+                } else {
+                    showNotification('❌ AI 服务请求失败：' + data.msg);
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification('❌ 联网调用失败，请检查 API 配置或网络');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
         function setupEventListeners() {
-            // 新增：点击弹窗遮罩空白处关闭
+            // 点击遮罩关闭
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('active');
-                    }
+                    if (e.target === modal) modal.classList.remove('active');
                 });
             });
+
+            // AI 相关事件
+            document.getElementById('openAiModal').addEventListener('click', () => {
+                document.getElementById('videoUrl').value = '';
+                document.getElementById('aiModal').classList.add('active');
+            });
+            document.getElementById('closeAiModal').addEventListener('click', () => {
+                document.getElementById('aiModal').classList.remove('active');
+            });
+            document.getElementById('aiAnalyzeBtn').addEventListener('click', analyzeVideoWithAi);
 
             document.getElementById('closeInputModal').addEventListener('click', () => {
                 document.getElementById('inputModal').classList.remove('active');
@@ -624,12 +739,6 @@
                     customInputCallback(document.getElementById('inputValue').value);
                 }
                 document.getElementById('inputModal').classList.remove('active');
-            });
-            document.getElementById('inputValue').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    document.getElementById('submitInputBtn').click();
-                }
             });
 
             document.getElementById('exportPlanImg').addEventListener('click', () => {
@@ -740,7 +849,7 @@
                 editingRecipeId = null;
                 updateFormCategorySelect();
                 document.getElementById('recipeForm').reset();
-                document.querySelector('#addModal h2').textContent = '添加新菜谱'; 
+                document.getElementById('addModalTitle').textContent = '添加新菜谱'; 
                 document.getElementById('addModal').classList.add('active');
             });
             
@@ -792,6 +901,8 @@
         function savePlanToStorage() { localStorage.setItem(PLAN_KEY, JSON.stringify(todayPlan)); }
         
         function showNotification(msg) {
+            const oldNotify = document.getElementById('notify');
+            if(oldNotify) oldNotify.remove();
             const div = document.createElement('div');
             div.id = 'notify';
             div.innerHTML = msg;
