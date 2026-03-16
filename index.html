@@ -11,7 +11,8 @@
     <meta name="keywords" content="食光小屋, 在线食谱笔记本, 食谱管理, 家庭饮食计划, 菜谱记录工具, 个人菜谱本, 网页版食谱">
     
     <meta name="author" content="食光小屋">
-    <meta name="robots" content="index, follow"> <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta name="robots" content="index, follow"> 
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -96,8 +97,14 @@
         .card-actions { position: absolute; top: 25px; right: 25px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.3s; z-index: 10; }
         .meal-card:hover .card-actions, .card-actions.active { opacity: 1; }
         .action-btn { width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s; font-size: 22px; }
+        
         .btn-delete { background: var(--bg-white); color: var(--brand-accent); }
         .btn-delete:hover { background: var(--brand-accent); color: white; transform: scale(1.15); }
+        
+        /* 新增：编辑按钮样式 */
+        .btn-edit { background: var(--bg-white); color: var(--brand-primary); font-size: 20px;}
+        .btn-edit:hover { background: var(--brand-primary); color: white; transform: scale(1.15); }
+
         .btn-add-plan { background: var(--bg-white); color: var(--brand-primary); transform: scale(0.8); }
         .meal-card:hover .btn-add-plan { transform: scale(1); }
         .btn-add-plan:hover { background: var(--brand-primary); color: white; transform: scale(1.15) rotate(90deg); }
@@ -131,7 +138,6 @@
         .shopping-items { display: flex; flex-wrap: wrap; gap: 12px; }
         .shopping-item { background: var(--bg-light); padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 700; color: var(--text-dark); border: 1px solid #E2E8F0; }
         
-        /* SEO专属底部占位，自然融入关键词 */
         .site-footer {
             margin-top: auto;
             padding-top: 60px;
@@ -294,7 +300,6 @@
             { id: 'r8', name: '滑蛋虾仁全麦吐司', category: 'diet', type: 'breakfast', desc: '高颜值轻食', ingredients: ['全麦吐司 1片', '鸡蛋 2个', '虾仁 5只', '牛奶 20ml', '欧芹碎 少许'], steps: ['吐司放入平底锅双面加热至微焦', '蛋液加牛奶打散，虾仁先炒熟捞出', '小火热锅下蛋液，快凝固时放入虾仁立刻关火', '将滑蛋铺在吐司上，撒欧芹碎装饰'] },
             { id: 'r9', name: '柠檬手撕鸡胸肉', category: 'diet', type: 'dinner', desc: '减脂期必备凉拌菜', ingredients: ['鸡胸肉 1块', '柠檬 半个', '黄瓜 1段', '香菜/蒜末 适量', '生抽/陈醋 1勺'], steps: ['鸡胸肉加姜片煮熟，捞出过凉水撕成条', '黄瓜切丝，柠檬切片去籽', '调酱汁：蒜末、生抽、陈醋、少许代糖混合', '将所有食材抓匀，冷藏半小时风味更佳'] },
             { id: 'r10', name: '无米燕麦黄金炒饭', category: 'diet', type: 'dinner', desc: '控糖效果极佳', ingredients: ['生燕麦片 60g', '鸡蛋 1个', '冷冻杂菜(玉米豌豆) 适量', '香菇 2朵'], steps: ['燕麦片加少量水打湿闷软，拌入一个蛋液拌匀', '锅中炒香香菇和杂菜', '倒入裹满蛋液的燕麦片，中火不停翻炒至颗粒分明', '加少许盐和葱花即可出锅'] },
-            
         ];
         
         let todayPlan = JSON.parse(localStorage.getItem(PLAN_KEY)) || [];
@@ -303,6 +308,7 @@
         let currentFilter = 'all';
 
         let customInputCallback = null;
+        let editingRecipeId = null; // 新增：用于记录当前正在编辑的菜谱ID，null表示新增
 
         function init() {
             renderCategories();
@@ -407,7 +413,10 @@
                 
                 card.innerHTML = `
                     <div class="card-actions ${isManageMode ? 'active' : ''}">
-                        ${isManageMode ? `<button class="action-btn btn-delete" data-id="${recipe.id}">×</button>` : ''}
+                        ${isManageMode ? `
+                            <button class="action-btn btn-edit" data-id="${recipe.id}" title="编辑">✎</button>
+                            <button class="action-btn btn-delete" data-id="${recipe.id}" title="删除">×</button>
+                        ` : ''}
                         ${!isManageMode ? `<button class="action-btn btn-add-plan ${isAdded ? 'added' : ''}" data-id="${recipe.id}">${isAdded ? '✓' : '＋'}</button>` : ''}
                     </div>
                     <div class="meal-img">${recipe.name.substring(0,2)}</div>
@@ -434,6 +443,7 @@
                     });
                 });
             } else {
+                // 原有的删除逻辑
                 document.querySelectorAll('.btn-delete').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -445,6 +455,31 @@
                             renderRecipes();
                             renderTodayPlan();
                             showNotification('已删除！');
+                        }
+                    });
+                });
+
+                // 新增：编辑逻辑
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const recipeId = btn.dataset.id;
+                        const recipe = recipes.find(r => r.id === recipeId);
+                        
+                        if (recipe) {
+                            editingRecipeId = recipeId;
+                            updateFormCategorySelect();
+                            
+                            // 数据回填
+                            document.getElementById('recipeName').value = recipe.name;
+                            document.getElementById('recipeCategory').value = recipe.category;
+                            document.getElementById('recipeType').value = recipe.type;
+                            document.getElementById('recipeDesc').value = recipe.desc || '';
+                            document.getElementById('recipeIngredients').value = recipe.ingredients.join('\n');
+                            document.getElementById('recipeSteps').value = recipe.steps.join('\n');
+                            
+                            document.querySelector('#addModal h2').textContent = '编辑菜谱';
+                            document.getElementById('addModal').classList.add('active');
                         }
                     });
                 });
@@ -571,7 +606,6 @@
                 exportDiv.style.fontFamily = "'Noto Sans SC', 'Montserrat', sans-serif";
                 exportDiv.style.color = "var(--text-dark)";
 
-                // 导出图片中也融入关键词
                 let htmlContent = `
                     <div style="background: var(--brand-yellow); border-radius: var(--radius-xl); padding: 40px; text-align: center; margin-bottom: 30px; box-shadow: var(--shadow-soft);">
                         <h1 style="font-size: 38px; font-weight: 900; margin: 0; letter-spacing: 2px;">今日饮食计划</h1>
@@ -657,8 +691,10 @@
             });
             
             document.getElementById('openAddModal').addEventListener('click', () => {
+                editingRecipeId = null; // 重置为新增状态
                 updateFormCategorySelect();
                 document.getElementById('recipeForm').reset();
+                document.querySelector('#addModal h2').textContent = '添加新菜谱'; 
                 document.getElementById('addModal').classList.add('active');
             });
             
@@ -667,24 +703,38 @@
             
             document.getElementById('recipeForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const newRecipe = {
-                    id: 'r' + Date.now(),
-                    name: document.getElementById('recipeName').value,
-                    category: document.getElementById('recipeCategory').value,
-                    type: document.getElementById('recipeType').value,
-                    desc: document.getElementById('recipeDesc').value,
-                    ingredients: document.getElementById('recipeIngredients').value.split('\n').filter(i => i.trim()),
-                    steps: document.getElementById('recipeSteps').value.split('\n').filter(i => i.trim())
-                };
-                recipes.push(newRecipe);
+                
+                const name = document.getElementById('recipeName').value;
+                const category = document.getElementById('recipeCategory').value;
+                const type = document.getElementById('recipeType').value;
+                const desc = document.getElementById('recipeDesc').value;
+                const ingredients = document.getElementById('recipeIngredients').value.split('\n').filter(i => i.trim());
+                const steps = document.getElementById('recipeSteps').value.split('\n').filter(i => i.trim());
+
+                if (editingRecipeId) {
+                    // 编辑模式
+                    const index = recipes.findIndex(r => r.id === editingRecipeId);
+                    if (index > -1) {
+                        recipes[index] = { ...recipes[index], name, category, type, desc, ingredients, steps };
+                    }
+                    showNotification('修改成功！');
+                } else {
+                    // 新增模式
+                    const newRecipe = {
+                        id: 'r' + Date.now(),
+                        name, category, type, desc, ingredients, steps
+                    };
+                    recipes.push(newRecipe);
+                    currentCategory = newRecipe.category;
+                    showNotification('添加成功！');
+                }
+                
                 saveRecipesToStorage();
                 document.getElementById('addModal').classList.remove('active');
                 
-                currentCategory = newRecipe.category;
                 renderCategories();
                 renderRecipes();
-                
-                showNotification('添加成功！');
+                renderTodayPlan();
             });
         }
 
