@@ -1,4 +1,4 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -506,7 +506,6 @@
                 font-size: 14px;
             }
 
-            /* 修改点：让购物清单在手机端整体更紧凑 */
             .shopping-section { padding: 15px 12px; }
             .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; margin-bottom: 12px; }
             .shopping-title { font-size: 16px; }
@@ -713,7 +712,6 @@
     </div>
 
     <script>
-        // JS 逻辑保持不变，除了修复了 inputModal 关闭按钮的问题
         const COZE_CONFIG = {
             apiToken: 'YOUR_API_TOKEN_HERE', 
             workflowId: 'YOUR_WORKFLOW_ID_HERE' 
@@ -922,7 +920,6 @@
                 }
             });
             
-            // 绑定事件...
             if (isManageMode) {
                 document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = (e) => {
                     e.stopPropagation();
@@ -1032,32 +1029,48 @@
                 const topBar = document.querySelector('.top-bar');
                 if (window.scrollY > 60) topBar.classList.add('scrolled'); else topBar.classList.remove('scrolled');
             };
+            
+            // 修复点 1: 顶部餐别类型选择框（早餐/午餐/晚餐）发生改变时，同步下方按钮的选中状态
             document.getElementById('topCategorySelect').onchange = (e) => {
+                e.target.parentNode.dataset.value = e.target.options[e.target.selectedIndex].text;
                 currentCategory = e.target.value;
                 renderCategories();
                 renderRecipes();
             };
             document.getElementById('topTypeSelect').onchange = (e) => {
+                e.target.parentNode.dataset.value = e.target.options[e.target.selectedIndex].text;
                 currentFilter = e.target.value;
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.type === currentFilter);
+                });
                 renderRecipes();
             };
+
             document.querySelectorAll('.modal').forEach(m => m.onclick = (e) => { if (e.target === m) m.classList.remove('active'); });
             document.getElementById('openAiModal').onclick = () => { document.getElementById('videoUrl').value = ''; document.getElementById('aiModal').classList.add('active'); };
             document.getElementById('closeAiModal').onclick = () => document.getElementById('aiModal').classList.remove('active');
             document.getElementById('aiAnalyzeBtn').onclick = analyzeVideoWithAi;
             
-            // 修复点：添加修改分类名称弹窗（inputModal）的关闭按钮事件
             document.getElementById('closeInputModal').onclick = () => document.getElementById('inputModal').classList.remove('active');
-            
             document.getElementById('submitInputBtn').onclick = () => { if(customInputCallback) customInputCallback(document.getElementById('inputValue').value); document.getElementById('inputModal').classList.remove('active'); };
             document.getElementById('doConfirmBtn').onclick = () => { if (confirmActionCallback) confirmActionCallback(); document.getElementById('confirmModal').classList.remove('active'); };
             document.getElementById('cancelConfirmBtn').onclick = () => document.getElementById('confirmModal').classList.remove('active');
+            
+            // 修复点 2: 下方的餐别类型按钮点击时，同步上方 Select 的选中状态和显示文字
             document.querySelectorAll('.filter-btn').forEach(b => b.onclick = () => {
                 document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
                 b.classList.add('active');
                 currentFilter = b.dataset.type;
+                
+                const topTypeSelect = document.getElementById('topTypeSelect');
+                if (topTypeSelect) {
+                    topTypeSelect.value = currentFilter;
+                    topTypeSelect.parentNode.dataset.value = topTypeSelect.options[topTypeSelect.selectedIndex].text;
+                }
+                
                 renderRecipes();
             });
+
             document.getElementById('toggleManage').onclick = (e) => {
                 isManageMode = !isManageMode;
                 e.target.classList.toggle('active-mode');
