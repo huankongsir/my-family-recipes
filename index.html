@@ -88,7 +88,6 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* 核心修复：使用 Grid 容器结合隐形伪层，让宽度完全跟随字数动态伸缩 */
         .custom-select-wrapper {
             position: relative;
             display: grid;
@@ -104,7 +103,7 @@
             font-weight: 900;
             font-family: 'Noto Sans SC', 'Montserrat', sans-serif;
             letter-spacing: -0.5px;
-            padding-right: 18px; /* 动态给右侧下拉箭头留出的恒定间距 */
+            padding-right: 18px; 
         }
         .custom-select-wrapper select {
             appearance: none;
@@ -329,12 +328,13 @@
                 width: auto;
                 justify-content: flex-start;
             }
+            /* 需求：手机端滑动时标题消失，筛选靠左 */
             .top-bar.scrolled .logo {
-                font-size: 16px;
+                display: none;
             }
-            .top-filters {
-                margin-left: 20px;
-                gap: 12px;
+            .top-bar.scrolled .top-filters {
+                margin-left: 0;
+                gap: 16px; 
             }
             .custom-select-wrapper select,
             .custom-select-wrapper::after {
@@ -456,46 +456,7 @@
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
-            .selected-meals { 
-                grid-template-columns: repeat(2, 1fr); 
-                gap: 10px;
-            }
-            .selected-meal-card {
-                padding: 10px;
-                gap: 8px;
-            }
-            .selected-meal-card:hover {
-                padding: 8px; 
-            }
-            .meal-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-                border-radius: 10px;
-                flex-shrink: 0;
-            }
-            .meal-details {
-                flex: 1;
-                min-width: 0; 
-                overflow: hidden;
-            }
-            .selected-meal-name {
-                font-size: 13px;
-                margin-bottom: 0;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis; 
-            }
-            .remove-meal {
-                width: 24px;
-                height: 24px;
-                font-size: 14px;
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
+            /* 需求：恢复一列布局，去除了双列时的缩小样式 */
             .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
             .export-btn { 
                 width: 40px; 
