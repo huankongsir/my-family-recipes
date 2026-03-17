@@ -456,13 +456,14 @@
                         <label>简短描述</label>
                         <textarea id="recipeDesc" placeholder="高蛋白低脂，15分钟快手菜"></textarea>
                     </div>
+                    <!-- 优化需求：为食材清单和制作步骤增加了 rows="5" 属性 -->
                     <div class="form-group">
                         <label>食材清单（每行一项）</label>
-                        <textarea id="recipeIngredients" placeholder="鸡胸肉 150g&#10;西兰花 100g&#10;橄榄油 1小勺" required></textarea>
+                        <textarea id="recipeIngredients" rows="5" placeholder="鸡胸肉 150g&#10;西兰花 100g&#10;橄榄油 1小勺" required></textarea>
                     </div>
                     <div class="form-group">
                         <label>制作步骤（每行一步）</label>
-                        <textarea id="recipeSteps" placeholder="1. 鸡胸肉切薄片&#10;2. 用盐和黑胡椒腌制10分钟&#10;3. 小火煎至两面金黄" required></textarea>
+                        <textarea id="recipeSteps" rows="5" placeholder="1. 鸡胸肉切薄片&#10;2. 用盐和黑胡椒腌制10分钟&#10;3. 小火煎至两面金黄" required></textarea>
                     </div>
                     <button type="submit" class="btn-submit">保存菜谱</button>
                 </form>
