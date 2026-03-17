@@ -328,7 +328,6 @@
                 width: auto;
                 justify-content: flex-start;
             }
-            /* 需求：手机端滑动时标题消失，筛选靠左 */
             .top-bar.scrolled .logo {
                 display: none;
             }
@@ -456,6 +455,9 @@
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
+            /* 需求：减小手机端今日饮食计划卡片的垂直间距 */
+            .selected-meals { gap: 10px; }
+
             /* 需求：恢复一列布局，去除了双列时的缩小样式 */
             .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
             .export-btn { 
