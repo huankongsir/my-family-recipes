@@ -46,15 +46,29 @@
             flex-direction: column;
         }
 
+        /* 修复：使用伪层遮挡导航栏上方的滚动穿透区域 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background: var(--bg-light);
+            z-index: 95;
+        }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--text-light); border-radius: 10px; }
 
         .top-bar {
             width: 100%;
             display: flex; justify-content: space-between; align-items: center;
-            margin: 0 auto 40px; padding: 15px 30px; background: var(--bg-white);
+            margin: 0 auto 20px; padding: 15px 30px; background: var(--bg-white);
             border-radius: 100px; box-shadow: var(--shadow-soft); max-width: 1200px;
             border: 1px solid rgba(0,0,0,0.03);
+            /* 将 top 设为 15px，完美对接上方的遮罩层 */
+            position: sticky; top: 15px; z-index: 100;
         }
 
         .logo { font-family: 'Montserrat', 'Noto Sans SC', sans-serif; font-size: 26px; font-weight: 900; color: var(--text-dark); letter-spacing: -0.5px; }
@@ -69,13 +83,13 @@
         .btn-ai { background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%); color: white; box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25); }
         .btn-ai:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(139, 92, 246, 0.35); }
 
-        .nav-container { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; }
+        .nav-container { display: flex; justify-content: center; gap: 40px; margin-bottom: 15px; }
         .nav-item { font-size: 22px; font-weight: 900; color: var(--text-light); cursor: pointer; position: relative; transition: color 0.3s; padding-bottom: 8px; user-select: none; }
         .nav-item:hover { color: var(--text-dark); }
         .nav-item.active { color: var(--text-dark); }
         .nav-item.active::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 6px; background: var(--brand-accent); border-radius: 4px; }
         
-        .filter-section { display: flex; justify-content: center; gap: 12px; margin-bottom: 50px; }
+        .filter-section { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; }
         .filter-btn { padding: 10px 24px; border-radius: 100px; background: var(--bg-white); border: 2px solid #E2E8F0; color: var(--text-gray); font-weight: 700; cursor: pointer; transition: all 0.3s; }
         .filter-btn:hover { border-color: var(--text-light); transform: translateY(-2px); }
         .filter-btn.active { background: var(--text-dark); color: var(--bg-white); border-color: var(--text-dark); box-shadow: 0 8px 16px rgba(15,23,42,0.15); }
@@ -174,10 +188,41 @@
         .ingredients-list li { background: var(--bg-light); padding: 12px 20px; border-radius: var(--radius-sm); margin-bottom: 8px; font-weight: 700; }
         .steps-list li { padding: 12px 20px; border-left: 4px solid var(--text-light); margin-bottom: 12px; background: var(--bg-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;}
         
-        #notify { position: fixed; top: 30px; right: 30px; background: var(--text-dark); color: white; padding: 16px 28px; border-radius: 100px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; font-weight: 700; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s 2.5s forwards; }
+        /* 修复：重新设计轻盈版的悬浮提示框 */
+        #notify { 
+            position: fixed; 
+            top: 35px; 
+            right: 30px; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            color: var(--text-dark); 
+            padding: 12px 24px; 
+            border-radius: 100px; 
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); 
+            border: 1px solid rgba(0,0,0,0.05); 
+            z-index: 2000; 
+            font-weight: 700; 
+            font-size: 15px;
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s 2.5s forwards; 
+        }
         @keyframes slideIn { from { transform: translateX(150%); } to { transform: translateX(0); } }
         @keyframes fadeOut { to { opacity: 0; transform: translateX(150%); } }
-        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px; vertical-align: middle; }
+        
+        /* 配套修改加载圈为浅色调适应白色背景 */
+        .loading-spinner { 
+            display: inline-block; 
+            width: 18px; 
+            height: 18px; 
+            border: 2px solid #E2E8F0; 
+            border-radius: 50%; 
+            border-top-color: var(--brand-primary); 
+            animation: spin 1s ease-in-out infinite; 
+            margin-right: 2px; 
+            vertical-align: middle; 
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* =========================================
@@ -206,13 +251,12 @@
                 text-align: center;
             }
 
-            /* 修正：分类导航在手机端居中 */
             .nav-container { 
                 justify-content: center; 
                 gap: 20px; 
                 overflow-x: auto; 
                 padding: 0 10px 10px 10px; 
-                margin-bottom: 20px; 
+                margin-bottom: 10px; 
                 -webkit-overflow-scrolling: touch; 
                 scrollbar-width: none; 
                 width: 100%;
@@ -220,7 +264,7 @@
             .nav-container::-webkit-scrollbar { display: none; }
             .nav-item { font-size: 18px; white-space: nowrap; }
 
-            .filter-section { flex-wrap: wrap; margin-bottom: 30px; gap: 10px; }
+            .filter-section { flex-wrap: wrap; margin-bottom: 20px; gap: 10px; }
             .filter-btn { padding: 8px 16px; font-size: 14px; }
 
             .grid-container { grid-template-columns: 1fr; gap: 20px; }
@@ -228,7 +272,6 @@
             .card-actions { opacity: 1; }
             .btn-add-plan { transform: scale(1); }
 
-            /* 修正：今日计划按钮图标化并与标题同行 */
             .today-plan { padding: 25px 20px; }
             .plan-header { 
                 flex-direction: row; 
@@ -239,7 +282,6 @@
             .plan-title { font-size: 20px; white-space: nowrap; }
             .header-actions { width: auto; gap: 8px; }
             
-            /* 图标按钮样式 */
             .export-plan-btn, .clear-plan { 
                 width: 40px; 
                 height: 40px; 
@@ -248,26 +290,27 @@
                 align-items: center; 
                 justify-content: center; 
                 border-radius: 50%;
-                font-size: 0; /* 隐藏文字 */
+                font-size: 0; 
+            }
+            .export-plan-btn::before, .clear-plan::before {
+                content: ""; 
+                width: 20px; 
+                height: 20px; 
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
             }
             .export-plan-btn::before { 
-                content: ""; 
-                width: 20px; 
-                height: 20px; 
-                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'%3E%3C/path%3E%3Cpolyline points='7 10 12 15 17 10'%3E%3C/polyline%3E%3Cline x1='12' y1='15' x2='12' y2='3'%3E%3C/line%3E%3C/svg%3E") no-repeat center;
-                background-size: contain;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'%3E%3C/path%3E%3Cpolyline points='7 10 12 15 17 10'%3E%3C/polyline%3E%3Cline x1='12' y1='15' x2='12' y2='3'%3E%3C/line%3E%3C/svg%3E");
             }
             .clear-plan::before { 
-                content: ""; 
-                width: 20px; 
-                height: 20px; 
-                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
-                background-size: contain;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
             }
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
             .selected-meals { grid-template-columns: 1fr; }
+
             .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
             .export-btn { 
                 width: 40px; 
@@ -292,7 +335,20 @@
             .detail-img { height: 180px; font-size: 36px; }
             #detailTitle { font-size: 22px; }
             .close-modal { top: 10px; right: 10px; width: 36px; height: 36px; font-size: 20px; }
-            #notify { top: 20px; right: 20px; left: 20px; justify-content: center; text-align: center; }
+            
+            /* 在手机端时，由于增加了模糊效果，不再需要黑压压地铺满宽度，让它自然居中悬浮 */
+            #notify { 
+                top: 25px; 
+                right: 50%; 
+                left: auto; 
+                transform: translateX(50%);
+                justify-content: center; 
+                text-align: center; 
+                width: max-content;
+                max-width: 90%;
+            }
+            @keyframes slideIn { from { transform: translate(50%, -150%); opacity: 0; } to { transform: translate(50%, 0); opacity: 1;} }
+            @keyframes fadeOut { to { opacity: 0; transform: translate(50%, -150%); } }
         }
     </style>
 </head>
@@ -437,7 +493,6 @@
     </div>
 
     <script>
-        // JS 逻辑保持原有不变，仅配合 HTML 工作
         const COZE_CONFIG = {
             apiToken: 'YOUR_API_TOKEN_HERE', 
             workflowId: 'YOUR_WORKFLOW_ID_HERE' 
@@ -534,6 +589,7 @@
                 const addBtn = document.createElement('div');
                 addBtn.className = 'nav-item';
                 addBtn.textContent = '＋';
+                addBtn.title = '点击添加新分类';
                 addBtn.addEventListener('click', () => {
                     openCustomPrompt('添加新分类', '请输入新分类名称', '', (newName) => {
                         if (newName && newName.trim() !== '') {
@@ -592,7 +648,7 @@
 						</button>
                             <button class="action-btn btn-delete" data-id="${recipe.id}" title="删除">×</button>
                         ` : ''}
-                        ${!isManageMode ? `<button class="action-btn btn-add-plan ${isAdded ? 'added' : ''}" data-id="${recipe.id}">${isAdded ? '✓' : '＋'}</button>` : ''}
+                        ${!isManageMode ? `<button class="action-btn btn-add-plan ${isAdded ? 'added' : ''}" data-id="${recipe.id}" title="加入/移除今日计划">${isAdded ? '✓' : '＋'}</button>` : ''}
                     </div>
                     <div class="meal-img">${recipe.name.substring(0,2)}</div>
                     <div class="meal-info">
@@ -687,7 +743,7 @@
                     <div class="shopping-section">
                         <div class="shopping-header">
                             <div class="shopping-title">🛒 采购清单</div>
-                            <button class="export-btn" id="copyIngredients">一键复制</button>
+                            <button class="export-btn" id="copyIngredients" title="一键复制清单">一键复制</button>
                         </div>
                         <div class="shopping-items">
                             ${allIngredients.map(ing => `<div class="shopping-item">${ing}</div>`).join('')}
@@ -792,7 +848,9 @@
         function setupEventListeners() {
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.classList.remove('active');
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
                 });
             });
 
@@ -892,7 +950,10 @@
                         savePlanToStorage();
                         renderRecipes();
                         renderTodayPlan();
+                        showNotification('计划已清空！');
                     });
+                } else {
+                    showNotification('当前计划已经是空的啦！');
                 }
             });
             
