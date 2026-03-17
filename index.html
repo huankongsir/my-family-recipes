@@ -149,6 +149,33 @@
         .nav-item.active { color: var(--text-dark); }
         .nav-item.active::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 6px; background: var(--brand-accent); border-radius: 4px; }
         
+        /* 新增：分类的删除按钮样式 */
+        .cat-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            width: 20px;
+            height: 20px;
+            background: var(--bg-white);
+            color: var(--brand-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 900;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .cat-delete-btn:hover {
+            background: var(--brand-accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
         .filter-section { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; }
         .filter-btn { padding: 10px 24px; border-radius: 100px; background: var(--bg-white); border: 2px solid #E2E8F0; color: var(--text-gray); font-weight: 700; cursor: pointer; transition: all 0.3s; }
         .filter-btn:hover { border-color: var(--text-light); transform: translateY(-2px); }
@@ -772,6 +799,29 @@
                     });
                 });
                 
+                // 新增：如果当前是编辑模式，为分类标签添加删除按钮
+                if (isManageMode) {
+                    const delBtn = document.createElement('span');
+                    delBtn.className = 'cat-delete-btn';
+                    delBtn.innerHTML = '×';
+                    delBtn.title = '删除此分类';
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 阻止事件冒泡，防止触发分类的点击选中事件
+                        openConfirmModal('删除分类', `确定要删除「${cat.name}」分类吗？(该分类下的菜谱仍可在"全部"中查看)`, () => {
+                            categories = categories.filter(c => c.id !== cat.id);
+                            if (currentCategory === cat.id) {
+                                currentCategory = 'all'; // 若删除的是当前选中项，回退到全部
+                            }
+                            saveCategoriesToStorage();
+                            renderCategories();
+                            updateFormCategorySelect();
+                            renderRecipes();
+                            showNotification('分类已删除！');
+                        });
+                    });
+                    div.appendChild(delBtn);
+                }
+                
                 navContainer.appendChild(div);
             });
 
@@ -1039,7 +1089,7 @@
                     document.getElementById('addModalTitle').textContent = 'AI 录入核对';
                     updateFormCategorySelect();
                     document.getElementById('addModal').classList.add('active');
-                    showNotification('✨ AI 解析成功！请核对后保存');
+                    showNotification('✨ AI 解析成功！请核现代后保存');
                 } else {
                     showNotification('❌ AI 服务请求失败：' + data.msg);
                 }
@@ -1184,6 +1234,7 @@
                 isManageMode = !isManageMode;
                 e.target.classList.toggle('active-mode');
                 e.target.innerHTML = isManageMode ? '完成管理' : '编辑模式';
+                renderCategories(); // 新增：这里加了这行，用于刷新分类以显示/隐藏分类上面的删除图标
                 renderRecipes();
             });
             
