@@ -162,6 +162,8 @@
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--brand-primary); background: var(--bg-white); box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.1); }
         .btn-submit { background: var(--text-dark); color: white; width: 100%; padding: 18px; border-radius: 100px; border: none; font-size: 18px; font-weight: 900; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
         .btn-submit:hover { background: var(--brand-primary); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(29, 78, 216, 0.2); }
+        .btn-cancel { background: var(--bg-light); color: var(--text-dark); width: 100%; padding: 18px; border-radius: 100px; border: none; font-size: 18px; font-weight: 900; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
+        .btn-cancel:hover { background: #E2E8F0; transform: translateY(-2px); }
 
         .detail-header { text-align: center; margin-bottom: 30px; }
         .detail-img { height: 240px; background: var(--brand-yellow); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 900; color: var(--text-dark); margin-bottom: 25px; }
@@ -223,6 +225,9 @@
 
             .grid-container { grid-template-columns: 1fr; gap: 20px; }
 
+            .card-actions { opacity: 1; }
+            .btn-add-plan { transform: scale(1); }
+
             /* 修正：今日计划按钮图标化并与标题同行 */
             .today-plan { padding: 25px 20px; }
             .plan-header { 
@@ -245,15 +250,42 @@
                 border-radius: 50%;
                 font-size: 0; /* 隐藏文字 */
             }
-            /* 使用 SVG/Emoji 作为图标补位 */
-            .export-plan-btn::before { content: "📸"; font-size: 18px; }
-            .clear-plan::before { content: "🗑️"; font-size: 18px; }
+            .export-plan-btn::before { 
+                content: ""; 
+                width: 20px; 
+                height: 20px; 
+                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'%3E%3C/path%3E%3Cpolyline points='7 10 12 15 17 10'%3E%3C/polyline%3E%3Cline x1='12' y1='15' x2='12' y2='3'%3E%3C/line%3E%3C/svg%3E") no-repeat center;
+                background-size: contain;
+            }
+            .clear-plan::before { 
+                content: ""; 
+                width: 20px; 
+                height: 20px; 
+                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
+                background-size: contain;
+            }
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
             .selected-meals { grid-template-columns: 1fr; }
-            .shopping-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .export-btn { width: 100%; }
+            .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
+            .export-btn { 
+                width: 40px; 
+                height: 40px; 
+                padding: 0; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                border-radius: 50%;
+                font-size: 0; 
+            }
+            .export-btn::before { 
+                content: ""; 
+                width: 20px; 
+                height: 20px; 
+                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2' ry='2'%3E%3C/rect%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
+                background-size: contain;
+            }
 
             .modal-content { padding: 25px 20px; }
             .modal h2 { font-size: 22px; margin-bottom: 20px; }
@@ -324,6 +356,19 @@
                     <input type="text" id="inputValue" placeholder="请输入...">
                 </div>
                 <button class="btn-submit" id="submitInputBtn">确认保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmModal">
+        <div class="modal-wrapper" style="max-width: 400px; text-align: center;">
+            <div class="modal-content" style="padding: 30px 20px;">
+                <h2 id="confirmModalTitle" style="font-size: 24px; margin-bottom: 15px;">提示</h2>
+                <p id="confirmModalText" style="color: var(--text-gray); margin-bottom: 25px; font-weight: 700; font-size: 16px;">确定要执行此操作吗？</p>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn-cancel" id="cancelConfirmBtn" style="flex: 1; margin-top: 0;">取消</button>
+                    <button class="btn-submit" id="doConfirmBtn" style="flex: 1; margin-top: 0; background: var(--brand-accent); box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2);">确定</button>
+                </div>
             </div>
         </div>
     </div>
@@ -425,6 +470,7 @@
         let currentFilter = 'all';
 
         let customInputCallback = null;
+        let confirmActionCallback = null;
         let editingRecipeId = null;
 
         function init() {
@@ -444,6 +490,13 @@
             input.focus();
         }
 
+        function openConfirmModal(title, text, callback) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalText').textContent = text;
+            confirmActionCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
         function renderCategories() {
             const navContainer = document.getElementById('navContainer');
             navContainer.innerHTML = '';
@@ -453,6 +506,8 @@
                 div.className = `nav-item ${currentCategory === cat.id ? 'active' : ''}`;
                 div.dataset.category = cat.id;
                 div.textContent = cat.name;
+                
+                div.title = '双击可修改名称';
                 
                 div.addEventListener('click', (e) => {
                     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -566,7 +621,7 @@
                 document.querySelectorAll('.btn-delete').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        if (confirm('确定删除这道菜谱吗？')) {
+                        openConfirmModal('删除菜谱', '确定永久删除这道菜谱吗？', () => {
                             todayPlan = todayPlan.filter(id => id !== btn.dataset.id);
                             recipes = recipes.filter(r => r.id !== btn.dataset.id);
                             savePlanToStorage();
@@ -574,7 +629,7 @@
                             renderRecipes();
                             renderTodayPlan();
                             showNotification('已删除！');
-                        }
+                        });
                     });
                 });
 
@@ -760,6 +815,16 @@
                 document.getElementById('inputModal').classList.remove('active');
             });
 
+            document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
+                document.getElementById('confirmModal').classList.remove('active');
+                confirmActionCallback = null;
+            });
+            document.getElementById('doConfirmBtn').addEventListener('click', () => {
+                if (confirmActionCallback) confirmActionCallback();
+                document.getElementById('confirmModal').classList.remove('active');
+                confirmActionCallback = null;
+            });
+
             document.getElementById('exportPlanImg').addEventListener('click', () => {
                 const planMeals = recipes.filter(r => todayPlan.includes(r.id));
                 if(planMeals.length === 0) {
@@ -821,11 +886,13 @@
             });
             
             document.getElementById('clearPlan').addEventListener('click', () => {
-                if (todayPlan.length > 0 && confirm('确定清空今日计划吗？')) {
-                    todayPlan = [];
-                    savePlanToStorage();
-                    renderRecipes();
-                    renderTodayPlan();
+                if (todayPlan.length > 0) {
+                    openConfirmModal('清空计划', '确定清空今日所有的饮食计划吗？', () => {
+                        todayPlan = [];
+                        savePlanToStorage();
+                        renderRecipes();
+                        renderTodayPlan();
+                    });
                 }
             });
             
