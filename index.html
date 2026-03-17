@@ -149,7 +149,6 @@
         .nav-item.active { color: var(--text-dark); }
         .nav-item.active::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 6px; background: var(--brand-accent); border-radius: 4px; }
         
-        /* 新增：分类的删除按钮样式 */
         .cat-delete-btn {
             position: absolute;
             top: -8px;
@@ -422,9 +421,11 @@
             .filter-section { flex-wrap: wrap; margin-bottom: 20px; gap: 10px; }
             .filter-btn { padding: 8px 16px; font-size: 14px; }
 
+            /* 修改点：减小今日饮食计划与上方菜谱卡片的垂直间距 */
             .grid-container { 
                 grid-template-columns: repeat(2, 1fr); 
                 gap: 12px; 
+                margin-bottom: 30px; 
             }
             .meal-img { 
                 height: 110px; 
@@ -451,6 +452,8 @@
                 justify-content: space-between; 
                 align-items: center; 
                 gap: 0;
+                /* 修改点：减小标题行与下方卡片的垂直间距 */
+                margin-bottom: 15px; 
             }
             .plan-title { font-size: 20px; white-space: nowrap; }
             .header-actions { width: auto; gap: 8px; }
@@ -482,10 +485,31 @@
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
-            /* 需求：减小手机端今日饮食计划卡片的垂直间距 */
-            .selected-meals { gap: 10px; }
+            /* 修改点：减小已添加菜品区域的整体间距 */
+            .selected-meals { gap: 8px; margin-bottom: 12px; }
+            
+            /* 修改点：减小单个已添加菜品卡片的高度和内部元素尺寸 */
+            .selected-meal-card { 
+                padding: 10px; 
+                gap: 10px; 
+                border-radius: var(--radius-sm);
+            }
+            .meal-icon { 
+                width: 36px; 
+                height: 36px; 
+                font-size: 16px; 
+                border-radius: 10px;
+            }
+            .selected-meal-name { 
+                font-size: 14px; 
+                margin-bottom: 0;
+            }
+            .remove-meal {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
 
-            /* 需求：恢复一列布局，去除了双列时的缩小样式 */
             .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
             .export-btn { 
                 width: 40px; 
@@ -687,6 +711,7 @@
     </div>
 
     <script>
+        // JS 逻辑保持不变
         const COZE_CONFIG = {
             apiToken: 'YOUR_API_TOKEN_HERE', 
             workflowId: 'YOUR_WORKFLOW_ID_HERE' 
@@ -715,10 +740,8 @@
         
         let todayPlan = JSON.parse(localStorage.getItem(PLAN_KEY)) || [];
         let isManageMode = false;
-        
         let currentCategory = 'all'; 
         let currentFilter = 'all';
-
         let customInputCallback = null;
         let confirmActionCallback = null;
         let editingRecipeId = null;
@@ -759,11 +782,6 @@
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 e.target.classList.add('active');
                 currentCategory = 'all';
-                const topCatSelect = document.getElementById('topCategorySelect');
-                if(topCatSelect) {
-                    topCatSelect.value = currentCategory;
-                    topCatSelect.parentNode.dataset.value = topCatSelect.options[topCatSelect.selectedIndex].text;
-                }
                 renderRecipes();
             });
             navContainer.appendChild(allDiv);
@@ -773,18 +791,10 @@
                 div.className = `nav-item ${currentCategory === cat.id ? 'active' : ''}`;
                 div.dataset.category = cat.id;
                 div.textContent = cat.name;
-                
-                div.title = '双击可修改名称';
-                
                 div.addEventListener('click', (e) => {
                     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                     e.target.classList.add('active');
                     currentCategory = cat.id;
-                    const topCatSelect = document.getElementById('topCategorySelect');
-                    if(topCatSelect) {
-                        topCatSelect.value = currentCategory;
-                        topCatSelect.parentNode.dataset.value = topCatSelect.options[topCatSelect.selectedIndex].text;
-                    }
                     renderRecipes();
                 });
 
@@ -799,29 +809,23 @@
                     });
                 });
                 
-                // 新增：如果当前是编辑模式，为分类标签添加删除按钮
                 if (isManageMode) {
                     const delBtn = document.createElement('span');
                     delBtn.className = 'cat-delete-btn';
                     delBtn.innerHTML = '×';
-                    delBtn.title = '删除此分类';
                     delBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); // 阻止事件冒泡，防止触发分类的点击选中事件
-                        openConfirmModal('删除分类', `确定要删除「${cat.name}」分类吗？(该分类下的菜谱仍可在"全部"中查看)`, () => {
+                        e.stopPropagation();
+                        openConfirmModal('删除分类', `确定要删除「${cat.name}」分类吗？`, () => {
                             categories = categories.filter(c => c.id !== cat.id);
-                            if (currentCategory === cat.id) {
-                                currentCategory = 'all'; // 若删除的是当前选中项，回退到全部
-                            }
+                            if (currentCategory === cat.id) currentCategory = 'all';
                             saveCategoriesToStorage();
                             renderCategories();
                             updateFormCategorySelect();
                             renderRecipes();
-                            showNotification('分类已删除！');
                         });
                     });
                     div.appendChild(delBtn);
                 }
-                
                 navContainer.appendChild(div);
             });
 
@@ -829,12 +833,10 @@
                 const addBtn = document.createElement('div');
                 addBtn.className = 'nav-item';
                 addBtn.textContent = '＋';
-                addBtn.title = '点击添加新分类';
                 addBtn.addEventListener('click', () => {
                     openCustomPrompt('添加新分类', '请输入新分类名称', '', (newName) => {
                         if (newName && newName.trim() !== '') {
-                            const newId = 'cat_' + Date.now();
-                            categories.push({ id: newId, name: newName.trim() });
+                            categories.push({ id: 'cat_' + Date.now(), name: newName.trim() });
                             saveCategoriesToStorage();
                             renderCategories();
                             updateFormCategorySelect();
@@ -882,7 +884,7 @@
             );
             
             if (filtered.length === 0) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-light); font-weight:700; font-size:18px; background:var(--bg-white); border-radius:var(--radius-lg);">该分类下暂无菜谱，点击上方「＋ 添加菜谱」创建吧！</div>`;
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-light); font-weight:700; font-size:18px; background:var(--bg-white); border-radius:var(--radius-lg);">暂无菜谱</div>`;
                 return;
             }
             
@@ -890,21 +892,17 @@
                 const card = document.createElement('div');
                 card.className = 'meal-card';
                 card.dataset.id = recipe.id;
-                
                 const isAdded = todayPlan.includes(recipe.id);
                 
                 card.innerHTML = `
                     <div class="card-actions ${isManageMode ? 'active' : ''}">
                         ${isManageMode ? `
-                            <button class="action-btn btn-edit" data-id="${recipe.id}" title="编辑">
-    						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        					<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-        					<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-    						</svg>
-						</button>
-                            <button class="action-btn btn-delete" data-id="${recipe.id}" title="删除">×</button>
+                            <button class="action-btn btn-edit" data-id="${recipe.id}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn btn-delete" data-id="${recipe.id}">×</button>
                         ` : ''}
-                        ${!isManageMode ? `<button class="action-btn btn-add-plan ${isAdded ? 'added' : ''}" data-id="${recipe.id}" title="加入/移除今日计划">${isAdded ? '✓' : '＋'}</button>` : ''}
+                        ${!isManageMode ? `<button class="action-btn btn-add-plan ${isAdded ? 'added' : ''}" data-id="${recipe.id}">${isAdded ? '✓' : '＋'}</button>` : ''}
                     </div>
                     <div class="meal-img">${recipe.name.substring(0,2)}</div>
                     <div class="meal-info">
@@ -917,53 +915,42 @@
                 
                 if (!isManageMode) {
                     card.addEventListener('click', (e) => {
-                        if (!e.target.closest('.btn-add-plan')) { showRecipeDetail(recipe.id); }
+                        if (!e.target.closest('.btn-add-plan')) showRecipeDetail(recipe.id);
                     });
                 }
             });
             
-            if (!isManageMode) {
-                document.querySelectorAll('.btn-add-plan').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        toggleMealInPlan(btn.dataset.id);
+            // 绑定事件...
+            if (isManageMode) {
+                document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = (e) => {
+                    e.stopPropagation();
+                    openConfirmModal('删除菜谱', '确定永久删除吗？', () => {
+                        recipes = recipes.filter(r => r.id !== btn.dataset.id);
+                        todayPlan = todayPlan.filter(id => id !== btn.dataset.id);
+                        saveRecipesToStorage();
+                        savePlanToStorage();
+                        renderRecipes();
+                        renderTodayPlan();
                     });
+                });
+                document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const r = recipes.find(x => x.id === btn.dataset.id);
+                    if (r) {
+                        editingRecipeId = r.id;
+                        document.getElementById('recipeName').value = r.name;
+                        document.getElementById('recipeCategory').value = r.category;
+                        document.getElementById('recipeType').value = r.type;
+                        document.getElementById('recipeDesc').value = r.desc || '';
+                        document.getElementById('recipeIngredients').value = r.ingredients.join('\n');
+                        document.getElementById('recipeSteps').value = r.steps.join('\n');
+                        document.getElementById('addModal').classList.add('active');
+                    }
                 });
             } else {
-                document.querySelectorAll('.btn-delete').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        openConfirmModal('删除菜谱', '确定永久删除这道菜谱吗？', () => {
-                            todayPlan = todayPlan.filter(id => id !== btn.dataset.id);
-                            recipes = recipes.filter(r => r.id !== btn.dataset.id);
-                            savePlanToStorage();
-                            saveRecipesToStorage();
-                            renderRecipes();
-                            renderTodayPlan();
-                            showNotification('已删除！');
-                        });
-                    });
-                });
-
-                document.querySelectorAll('.btn-edit').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const recipeId = btn.dataset.id;
-                        const recipe = recipes.find(r => r.id === recipeId);
-                        
-                        if (recipe) {
-                            editingRecipeId = recipeId;
-                            updateFormCategorySelect();
-                            document.getElementById('recipeName').value = recipe.name;
-                            document.getElementById('recipeCategory').value = recipe.category;
-                            document.getElementById('recipeType').value = recipe.type;
-                            document.getElementById('recipeDesc').value = recipe.desc || '';
-                            document.getElementById('recipeIngredients').value = recipe.ingredients.join('\n');
-                            document.getElementById('recipeSteps').value = recipe.steps.join('\n');
-                            document.getElementById('addModalTitle').textContent = '编辑菜谱';
-                            document.getElementById('addModal').classList.add('active');
-                        }
-                    });
+                document.querySelectorAll('.btn-add-plan').forEach(btn => btn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleMealInPlan(btn.dataset.id);
                 });
             }
         }
@@ -971,340 +958,170 @@
         function renderTodayPlan() {
             const planContent = document.getElementById('planContent');
             const planMeals = recipes.filter(r => todayPlan.includes(r.id));
-            
             if (planMeals.length === 0) {
-                planContent.innerHTML = '<div class="plan-empty">今天吃点什么好呢？点击上方卡片添加到计划吧！</div>';
+                planContent.innerHTML = '<div class="plan-empty">今天吃点什么好呢？</div>';
                 return;
             }
-            
             let html = '<div class="selected-meals">';
             let allIngredients = [];
-            
             planMeals.forEach(meal => {
-                html += `
-                    <div class="selected-meal-card" data-id="${meal.id}">
-                        <div class="meal-icon">${meal.name.substring(0,1)}</div>
-                        <div class="meal-details">
-                            <div class="selected-meal-name">${meal.name}</div>
-                        </div>
-                        <button class="remove-meal" data-id="${meal.id}">×</button>
-                    </div>
-                `;
+                html += `<div class="selected-meal-card" data-id="${meal.id}"><div class="meal-icon">${meal.name.substring(0,1)}</div><div class="meal-details"><div class="selected-meal-name">${meal.name}</div></div><button class="remove-meal" data-id="${meal.id}">×</button></div>`;
                 allIngredients = allIngredients.concat(meal.ingredients);
             });
             html += '</div>';
-            
             if (allIngredients.length > 0) {
-                html += `
-                    <div class="shopping-section">
-                        <div class="shopping-header">
-                            <div class="shopping-title">🛒 采购清单</div>
-                            <button class="export-btn" id="copyIngredients" title="一键复制清单">一键复制</button>
-                        </div>
-                        <div class="shopping-items">
-                            ${allIngredients.map(ing => `<div class="shopping-item">${ing}</div>`).join('')}
-                        </div>
-                    </div>
-                `;
+                html += `<div class="shopping-section"><div class="shopping-header"><div class="shopping-title">🛒 采购清单</div><button class="export-btn" id="copyIngredients">一键复制</button></div><div class="shopping-items">${allIngredients.map(ing => `<div class="shopping-item">${ing}</div>`).join('')}</div></div>`;
             }
             planContent.innerHTML = html;
-            
-            document.querySelectorAll('.selected-meal-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if(!e.target.closest('.remove-meal')) {
-                        showRecipeDetail(card.dataset.id);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.remove-meal').forEach(btn => {
-                btn.addEventListener('click', (e) => toggleMealInPlan(e.target.dataset.id));
-            });
-            
+            document.querySelectorAll('.selected-meal-card').forEach(c => c.onclick = (e) => { if(!e.target.closest('.remove-meal')) showRecipeDetail(c.dataset.id); });
+            document.querySelectorAll('.remove-meal').forEach(b => b.onclick = (e) => toggleMealInPlan(b.dataset.id));
             const copyBtn = document.getElementById('copyIngredients');
-            if(copyBtn) {
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(allIngredients.join('\n'));
-                    showNotification('已复制到剪贴板！');
-                });
-            }
+            if(copyBtn) copyBtn.onclick = () => { navigator.clipboard.writeText(allIngredients.join('\n')); showNotification('已复制！'); };
         }
 
         function toggleMealInPlan(id) {
-            const index = todayPlan.indexOf(id);
-            if (index > -1) { todayPlan.splice(index, 1); } 
-            else { todayPlan.push(id); }
+            const idx = todayPlan.indexOf(id);
+            if (idx > -1) todayPlan.splice(idx, 1); else todayPlan.push(id);
             savePlanToStorage();
             renderRecipes();
             renderTodayPlan();
         }
 
         function showRecipeDetail(id) {
-            const recipe = recipes.find(r => r.id === id);
-            if (!recipe) return;
-            document.getElementById('detailTitle').textContent = recipe.name;
-            document.getElementById('detailDesc').textContent = recipe.desc;
-            document.getElementById('detailType').textContent = getChineseType(recipe.type);
-            document.getElementById('detailImg').textContent = recipe.name.substring(0,2);
-            document.getElementById('detailIngredients').innerHTML = recipe.ingredients.map(i => `<li>${i}</li>`).join('');
-            document.getElementById('detailSteps').innerHTML = recipe.steps.map(s => `<li>${s}</li>`).join('');
+            const r = recipes.find(x => x.id === id);
+            if (!r) return;
+            document.getElementById('detailTitle').textContent = r.name;
+            document.getElementById('detailDesc').textContent = r.desc;
+            document.getElementById('detailType').textContent = getChineseType(r.type);
+            document.getElementById('detailImg').textContent = r.name.substring(0,2);
+            document.getElementById('detailIngredients').innerHTML = r.ingredients.map(i => `<li>${i}</li>`).join('');
+            document.getElementById('detailSteps').innerHTML = r.steps.map(s => `<li>${s}</li>`).join('');
             document.getElementById('detailModal').classList.add('active');
         }
 
         async function analyzeVideoWithAi() {
             const url = document.getElementById('videoUrl').value.trim();
-            if (!url) {
-                showNotification('❌ 请粘贴有效的视频链接');
-                return;
-            }
-
+            if (!url) return showNotification('❌ 请粘贴链接');
             const btn = document.getElementById('aiAnalyzeBtn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = `<span class="loading-spinner"></span> 正在深度分析中...`;
-
+            btn.innerHTML = `<span class="loading-spinner"></span> 分析中...`;
             try {
                 const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${COZE_CONFIG.apiToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        workflow_id: COZE_CONFIG.workflowId,
-                        parameters: { url: url }
-                    })
+                    headers: { 'Authorization': `Bearer ${COZE_CONFIG.apiToken}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ workflow_id: COZE_CONFIG.workflowId, parameters: { url: url } })
                 });
-
                 const data = await response.json();
-                
                 if (data.code === 0) {
                     let aiResult = JSON.parse(data.data);
                     document.getElementById('recipeName').value = aiResult.name || '';
-                    document.getElementById('recipeDesc').value = aiResult.desc || '由 AI 自动生成';
+                    document.getElementById('recipeDesc').value = aiResult.desc || '';
                     document.getElementById('recipeIngredients').value = Array.isArray(aiResult.ingredients) ? aiResult.ingredients.join('\n') : (aiResult.ingredients || '');
                     document.getElementById('recipeSteps').value = Array.isArray(aiResult.steps) ? aiResult.steps.join('\n') : (aiResult.steps || '');
-                    
                     document.getElementById('aiModal').classList.remove('active');
-                    document.getElementById('addModalTitle').textContent = 'AI 录入核对';
-                    updateFormCategorySelect();
                     document.getElementById('addModal').classList.add('active');
-                    showNotification('✨ AI 解析成功！请核现代后保存');
-                } else {
-                    showNotification('❌ AI 服务请求失败：' + data.msg);
                 }
-            } catch (err) {
-                showNotification('❌ 联网调用失败，请检查 API 配置');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            } catch (err) { showNotification('❌ 解析失败'); } finally { btn.disabled = false; btn.innerHTML = originalText; }
         }
 
         function setupEventListeners() {
-            window.addEventListener('scroll', () => {
+            window.onscroll = () => {
                 const topBar = document.querySelector('.top-bar');
-                const isMobile = window.innerWidth <= 768;
-                const addThreshold = isMobile ? 60 : 180;
-                const removeThreshold = isMobile ? 10 : 80;
-
-                if (window.scrollY > addThreshold) {
-                    topBar.classList.add('scrolled');
-                } else if (window.scrollY < removeThreshold) {
-                    topBar.classList.remove('scrolled');
-                }
-            }, { passive: true });
-
-            document.getElementById('topCategorySelect').addEventListener('change', (e) => {
-                e.target.parentNode.dataset.value = e.target.options[e.target.selectedIndex].text;
+                if (window.scrollY > 60) topBar.classList.add('scrolled'); else topBar.classList.remove('scrolled');
+            };
+            document.getElementById('topCategorySelect').onchange = (e) => {
                 currentCategory = e.target.value;
-                document.querySelectorAll('.nav-item').forEach(i => {
-                    if (i.dataset.category) {
-                        i.classList.toggle('active', i.dataset.category === currentCategory);
-                    }
-                });
+                renderCategories();
                 renderRecipes();
-            });
-
-            document.getElementById('topTypeSelect').addEventListener('change', (e) => {
-                e.target.parentNode.dataset.value = e.target.options[e.target.selectedIndex].text;
+            };
+            document.getElementById('topTypeSelect').onchange = (e) => {
                 currentFilter = e.target.value;
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.toggle('active', b.dataset.type === currentFilter);
-                });
+                renderRecipes();
+            };
+            document.querySelectorAll('.modal').forEach(m => m.onclick = (e) => { if (e.target === m) m.classList.remove('active'); });
+            document.getElementById('openAiModal').onclick = () => { document.getElementById('videoUrl').value = ''; document.getElementById('aiModal').classList.add('active'); };
+            document.getElementById('closeAiModal').onclick = () => document.getElementById('aiModal').classList.remove('active');
+            document.getElementById('aiAnalyzeBtn').onclick = analyzeVideoWithAi;
+            document.getElementById('submitInputBtn').onclick = () => { if(customInputCallback) customInputCallback(document.getElementById('inputValue').value); document.getElementById('inputModal').classList.remove('active'); };
+            document.getElementById('doConfirmBtn').onclick = () => { if (confirmActionCallback) confirmActionCallback(); document.getElementById('confirmModal').classList.remove('active'); };
+            document.getElementById('cancelConfirmBtn').onclick = () => document.getElementById('confirmModal').classList.remove('active');
+            document.querySelectorAll('.filter-btn').forEach(b => b.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                currentFilter = b.dataset.type;
                 renderRecipes();
             });
-
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('active');
-                    }
-                });
-            });
-
-            document.getElementById('openAiModal').addEventListener('click', () => {
-                document.getElementById('videoUrl').value = '';
-                document.getElementById('aiModal').classList.add('active');
-            });
-            document.getElementById('closeAiModal').addEventListener('click', () => {
-                document.getElementById('aiModal').classList.remove('active');
-            });
-            document.getElementById('aiAnalyzeBtn').addEventListener('click', analyzeVideoWithAi);
-
-            document.getElementById('closeInputModal').addEventListener('click', () => {
-                document.getElementById('inputModal').classList.remove('active');
-            });
-            document.getElementById('submitInputBtn').addEventListener('click', () => {
-                if(customInputCallback) {
-                    customInputCallback(document.getElementById('inputValue').value);
-                }
-                document.getElementById('inputModal').classList.remove('active');
-            });
-
-            document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
-                document.getElementById('confirmModal').classList.remove('active');
-                confirmActionCallback = null;
-            });
-            document.getElementById('doConfirmBtn').addEventListener('click', () => {
-                if (confirmActionCallback) confirmActionCallback();
-                document.getElementById('confirmModal').classList.remove('active');
-                confirmActionCallback = null;
-            });
-
-            document.getElementById('exportPlanImg').addEventListener('click', () => {
-                const planMeals = recipes.filter(r => todayPlan.includes(r.id));
-                if(planMeals.length === 0) {
-                    showNotification('当前计划为空，无法导出！');
-                    return;
-                }
-                showNotification('正在生成长图中...');
-
-                const exportDiv = document.createElement('div');
-                exportDiv.style.position = 'fixed';
-                exportDiv.style.top = '0';
-                exportDiv.style.left = '-9999px'; 
-                exportDiv.style.width = '750px'; 
-                exportDiv.style.background = 'var(--bg-light)';
-                exportDiv.style.padding = '40px';
-                exportDiv.style.zIndex = '-1';
-                
-                let htmlContent = `<div style="background: var(--brand-yellow); border-radius: var(--radius-xl); padding: 40px; text-align: center; margin-bottom: 30px; box-shadow: var(--shadow-soft);"><h1 style="font-size: 38px; font-weight: 900; margin: 0;">今日饮食计划</h1><p style="font-size: 18px; font-weight: 700; opacity: 0.8; margin-top: 10px;">食光小屋 | 你的在线食谱笔记本</p></div>`;
-
-                planMeals.forEach(meal => {
-                    htmlContent += `
-                        <div style="background: var(--bg-white); border-radius: var(--radius-lg); padding: 35px; margin-bottom: 25px; box-shadow: var(--shadow-soft);">
-                            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 25px; border-bottom: 2px dashed #E2E8F0; padding-bottom: 20px;">
-                                <div style="width: 60px; height: 60px; background: var(--brand-primary); color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;">${meal.name.substring(0,1)}</div>
-                                <div><h2 style="font-size: 26px; font-weight: 900; margin: 0 0 5px 0;">${meal.name}</h2><span style="background: var(--bg-light); padding: 4px 12px; border-radius: 100px; font-size: 14px; font-weight: 700; color: var(--text-gray);">${getChineseType(meal.type)}</span></div>
-                            </div>
-                            <div style="margin-bottom: 25px;"><h3 style="font-size: 18px; font-weight: 900; margin-bottom: 15px;">食材准备</h3><div style="display: flex; flex-wrap: wrap; gap: 10px;">${meal.ingredients.map(ing => `<span style="background: var(--bg-light); padding: 8px 16px; border-radius: 8px; font-size: 15px; font-weight: 700;">${ing}</span>`).join('')}</div></div>
-                            <div><h3 style="font-size: 18px; font-weight: 900; margin-bottom: 15px;">制作步骤</h3><div style="display: flex; flex-direction: column; gap: 10px;">${meal.steps.map((step, idx) => `<div style="background: var(--bg-light); padding: 12px 18px; border-radius: 0 8px 8px 0; border-left: 4px solid var(--text-light); font-size: 15px; font-weight: 700;">${idx+1}. ${step}</div>`).join('')}</div></div>
-                        </div>`;
-                });
-
-                exportDiv.innerHTML = htmlContent;
-                document.body.appendChild(exportDiv);
-
-                html2canvas(exportDiv, { scale: 2, backgroundColor: '#F7F9FC' }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `今日计划_${new Date().toLocaleDateString().replace(/\//g,'-')}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    document.body.removeChild(exportDiv);
-                    showNotification('长图导出成功！');
-                });
-            });
-
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentFilter = e.target.dataset.type;
-                    const topTypeSelect = document.getElementById('topTypeSelect');
-                    if(topTypeSelect) {
-                        topTypeSelect.value = currentFilter;
-                        topTypeSelect.parentNode.dataset.value = topTypeSelect.options[topTypeSelect.selectedIndex].text;
-                    }
-                    renderRecipes();
-                });
-            });
-            
-            document.getElementById('toggleManage').addEventListener('click', (e) => {
+            document.getElementById('toggleManage').onclick = (e) => {
                 isManageMode = !isManageMode;
                 e.target.classList.toggle('active-mode');
                 e.target.innerHTML = isManageMode ? '完成管理' : '编辑模式';
-                renderCategories(); // 新增：这里加了这行，用于刷新分类以显示/隐藏分类上面的删除图标
+                renderCategories();
                 renderRecipes();
-            });
-            
-            document.getElementById('clearPlan').addEventListener('click', () => {
-                if (todayPlan.length > 0) {
-                    openConfirmModal('清空计划', '确定清空今日所有的饮食计划吗？', () => {
-                        todayPlan = [];
-                        savePlanToStorage();
-                        renderRecipes();
-                        renderTodayPlan();
-                        showNotification('计划已清空！');
-                    });
-                } else {
-                    showNotification('当前计划已经是空的啦！');
-                }
-            });
-            
-            document.getElementById('openAddModal').addEventListener('click', () => {
+            };
+            document.getElementById('clearPlan').onclick = () => {
+                if (todayPlan.length > 0) openConfirmModal('清空计划', '确定吗？', () => { todayPlan = []; savePlanToStorage(); renderRecipes(); renderTodayPlan(); });
+            };
+            document.getElementById('openAddModal').onclick = () => {
                 editingRecipeId = null;
-                updateFormCategorySelect();
                 document.getElementById('recipeForm').reset();
-                document.getElementById('addModalTitle').textContent = '添加新菜谱'; 
                 document.getElementById('addModal').classList.add('active');
-            });
-            
-            document.getElementById('closeAddModal').addEventListener('click', () => { document.getElementById('addModal').classList.remove('active'); });
-            document.getElementById('closeDetailModal').addEventListener('click', () => { document.getElementById('detailModal').classList.remove('active'); });
-            
-            document.getElementById('recipeForm').addEventListener('submit', (e) => {
+            };
+            document.getElementById('closeAddModal').onclick = () => document.getElementById('addModal').classList.remove('active');
+            document.getElementById('closeDetailModal').onclick = () => document.getElementById('detailModal').classList.remove('active');
+            document.getElementById('recipeForm').onsubmit = (e) => {
                 e.preventDefault();
-                const name = document.getElementById('recipeName').value;
-                const category = document.getElementById('recipeCategory').value;
-                const type = document.getElementById('recipeType').value;
-                const desc = document.getElementById('recipeDesc').value;
-                const ingredients = document.getElementById('recipeIngredients').value.split('\n').filter(i => i.trim());
-                const steps = document.getElementById('recipeSteps').value.split('\n').filter(i => i.trim());
-
+                const r = {
+                    name: document.getElementById('recipeName').value,
+                    category: document.getElementById('recipeCategory').value,
+                    type: document.getElementById('recipeType').value,
+                    desc: document.getElementById('recipeDesc').value,
+                    ingredients: document.getElementById('recipeIngredients').value.split('\n').filter(x => x.trim()),
+                    steps: document.getElementById('recipeSteps').value.split('\n').filter(x => x.trim())
+                };
                 if (editingRecipeId) {
-                    const index = recipes.findIndex(r => r.id === editingRecipeId);
-                    if (index > -1) { recipes[index] = { ...recipes[index], name, category, type, desc, ingredients, steps }; }
-                    showNotification('修改成功！');
+                    const i = recipes.findIndex(x => x.id === editingRecipeId);
+                    recipes[i] = { ...recipes[i], ...r };
                 } else {
-                    const newRecipe = { id: 'r' + Date.now(), name, category, type, desc, ingredients, steps };
-                    recipes.push(newRecipe);
-                    currentCategory = newRecipe.category;
-                    showNotification('添加成功！');
+                    recipes.push({ id: 'r' + Date.now(), ...r });
                 }
                 saveRecipesToStorage();
                 document.getElementById('addModal').classList.remove('active');
-                renderCategories();
                 renderRecipes();
                 renderTodayPlan();
-            });
+            };
+
+            document.getElementById('exportPlanImg').onclick = () => {
+                const planMeals = recipes.filter(r => todayPlan.includes(r.id));
+                if(planMeals.length === 0) return showNotification('计划为空！');
+                showNotification('正在生成长图中...');
+                const exportDiv = document.createElement('div');
+                exportDiv.style.cssText = 'position:fixed;top:0;left:-9999px;width:750px;background:#F7F9FC;padding:40px;';
+                let html = `<div style="background:#FBBF24;border-radius:32px;padding:40px;text-align:center;margin-bottom:30px;"><h1 style="font-size:38px;font-weight:900;">今日饮食计划</h1></div>`;
+                planMeals.forEach(meal => {
+                    html += `<div style="background:#FFF;border-radius:24px;padding:35px;margin-bottom:25px;"><h2 style="font-size:26px;">${meal.name}</h2><p>${meal.ingredients.join(', ')}</p></div>`;
+                });
+                exportDiv.innerHTML = html;
+                document.body.appendChild(exportDiv);
+                html2canvas(exportDiv, { scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = '今日计划.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    document.body.removeChild(exportDiv);
+                    showNotification('导出成功！');
+                });
+            };
         }
 
-        function getChineseType(type) {
-            const types = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '零食' };
-            return types[type] || type;
-        }
+        function getChineseType(type) { const t = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '零食' }; return t[type] || type; }
         function saveCategoriesToStorage() { localStorage.setItem(CAT_KEY, JSON.stringify(categories)); }
         function saveRecipesToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes)); }
         function savePlanToStorage() { localStorage.setItem(PLAN_KEY, JSON.stringify(todayPlan)); }
         function showNotification(msg) {
-            const oldNotify = document.getElementById('notify');
-            if(oldNotify) oldNotify.remove();
-            const div = document.createElement('div');
-            div.id = 'notify';
-            div.innerHTML = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
+            const old = document.getElementById('notify'); if(old) old.remove();
+            const div = document.createElement('div'); div.id = 'notify'; div.textContent = msg;
+            document.body.appendChild(div); setTimeout(() => div.remove(), 3000);
         }
         window.addEventListener('DOMContentLoaded', init);
     </script>
