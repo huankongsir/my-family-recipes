@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+=<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -421,7 +421,6 @@
             .filter-section { flex-wrap: wrap; margin-bottom: 20px; gap: 10px; }
             .filter-btn { padding: 8px 16px; font-size: 14px; }
 
-            /* 修改点：减小今日饮食计划与上方菜谱卡片的垂直间距 */
             .grid-container { 
                 grid-template-columns: repeat(2, 1fr); 
                 gap: 12px; 
@@ -452,7 +451,6 @@
                 justify-content: space-between; 
                 align-items: center; 
                 gap: 0;
-                /* 修改点：减小标题行与下方卡片的垂直间距 */
                 margin-bottom: 15px; 
             }
             .plan-title { font-size: 20px; white-space: nowrap; }
@@ -485,10 +483,8 @@
 
             .today-plan::before { font-size: 80px; top: -10px; right: -10px; }
             
-            /* 修改点：减小已添加菜品区域的整体间距 */
             .selected-meals { gap: 8px; margin-bottom: 12px; }
             
-            /* 修改点：减小单个已添加菜品卡片的高度和内部元素尺寸 */
             .selected-meal-card { 
                 padding: 10px; 
                 gap: 10px; 
@@ -510,10 +506,16 @@
                 font-size: 14px;
             }
 
-            .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
+            /* 修改点：让购物清单在手机端整体更紧凑 */
+            .shopping-section { padding: 15px 12px; }
+            .shopping-header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; margin-bottom: 12px; }
+            .shopping-title { font-size: 16px; }
+            .shopping-items { gap: 8px; }
+            .shopping-item { padding: 5px 12px; font-size: 12px; }
+            
             .export-btn { 
-                width: 40px; 
-                height: 40px; 
+                width: 32px; 
+                height: 32px; 
                 padding: 0; 
                 display: flex; 
                 align-items: center; 
@@ -523,8 +525,8 @@
             }
             .export-btn::before { 
                 content: ""; 
-                width: 20px; 
-                height: 20px; 
+                width: 16px; 
+                height: 16px; 
                 background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2' ry='2'%3E%3C/rect%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
                 background-size: contain;
             }
@@ -711,7 +713,7 @@
     </div>
 
     <script>
-        // JS 逻辑保持不变
+        // JS 逻辑保持不变，除了修复了 inputModal 关闭按钮的问题
         const COZE_CONFIG = {
             apiToken: 'YOUR_API_TOKEN_HERE', 
             workflowId: 'YOUR_WORKFLOW_ID_HERE' 
@@ -1043,6 +1045,10 @@
             document.getElementById('openAiModal').onclick = () => { document.getElementById('videoUrl').value = ''; document.getElementById('aiModal').classList.add('active'); };
             document.getElementById('closeAiModal').onclick = () => document.getElementById('aiModal').classList.remove('active');
             document.getElementById('aiAnalyzeBtn').onclick = analyzeVideoWithAi;
+            
+            // 修复点：添加修改分类名称弹窗（inputModal）的关闭按钮事件
+            document.getElementById('closeInputModal').onclick = () => document.getElementById('inputModal').classList.remove('active');
+            
             document.getElementById('submitInputBtn').onclick = () => { if(customInputCallback) customInputCallback(document.getElementById('inputValue').value); document.getElementById('inputModal').classList.remove('active'); };
             document.getElementById('doConfirmBtn').onclick = () => { if (confirmActionCallback) confirmActionCallback(); document.getElementById('confirmModal').classList.remove('active'); };
             document.getElementById('cancelConfirmBtn').onclick = () => document.getElementById('confirmModal').classList.remove('active');
