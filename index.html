@@ -747,11 +747,12 @@
         let confirmActionCallback = null;
         let editingRecipeId = null;
 
-        function init() {
+       function init() {
             renderCategories();
             renderRecipes();
             renderTodayPlan();
             setupEventListeners();
+            updateFormCategorySelect(); // [新增这一行] 确保页面初始化时直接渲染表单的分类下拉框
         }
 
         function openCustomPrompt(title, placeholder, defaultValue, callback) {
